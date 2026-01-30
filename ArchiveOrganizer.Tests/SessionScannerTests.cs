@@ -49,7 +49,7 @@ public class SessionScannerTests : IDisposable
     public void Scan_MasterFileWithCos_ReturnsCompleteItem()
     {
         // Arrange
-        var masterFile = "mwp_123x(1)_240115.CR3";
+        var masterFile = "img_123x(1)_240115.CR3";
         CreateMasterFile(masterFile);
         CreateCosFile(masterFile);
 
@@ -68,7 +68,7 @@ public class SessionScannerTests : IDisposable
     public void Scan_MasterFileWithoutCos_ReturnsMissingCosItem()
     {
         // Arrange
-        var masterFile = "mwp_456(2)_240115.NEF";
+        var masterFile = "img_456(2)_240115.NEF";
         CreateMasterFile(masterFile);
 
         // Act
@@ -86,10 +86,10 @@ public class SessionScannerTests : IDisposable
     public void Scan_MultipleFilesWithSameInventoryId_ReturnsMultipleItems()
     {
         // Arrange
-        CreateMasterFile("mwp_123x(1)_240115.CR3");
-        CreateMasterFile("mwp_123x(2)_240115.CR3");
-        CreateCosFile("mwp_123x(1)_240115.CR3");
-        CreateCosFile("mwp_123x(2)_240115.CR3");
+        CreateMasterFile("img_123x(1)_240115.CR3");
+        CreateMasterFile("img_123x(2)_240115.CR3");
+        CreateCosFile("img_123x(1)_240115.CR3");
+        CreateCosFile("img_123x(2)_240115.CR3");
 
         // Act
         var result = SessionScanner.Scan(_testFolder);
@@ -106,7 +106,7 @@ public class SessionScannerTests : IDisposable
         var subdir = Path.Combine(_testFolder, "Session1");
         Directory.CreateDirectory(subdir);
 
-        var masterFile = "mwp_789(1)_240115.ARW";
+        var masterFile = "img_789(1)_240115.ARW";
         CreateMasterFile(masterFile, subdir);
         CreateCosFile(masterFile, subdir);
 
@@ -123,7 +123,7 @@ public class SessionScannerTests : IDisposable
     public void Scan_SkipsNonMatchingFiles()
     {
         // Arrange
-        CreateMasterFile("mwp_123x(1)_240115.CR3");
+        CreateMasterFile("img_123x(1)_240115.CR3");
         File.WriteAllText(Path.Combine(_testFolder, "random_photo.jpg"), "");
         File.WriteAllText(Path.Combine(_testFolder, "document.pdf"), "");
 
@@ -139,13 +139,13 @@ public class SessionScannerTests : IDisposable
     public void Scan_AllSupportedExtensions_FindsAll()
     {
         // Arrange
-        CreateMasterFile("mwp_a(1)_240115.NEF");
-        CreateMasterFile("mwp_b(1)_240115.CR3");
-        CreateMasterFile("mwp_c(1)_240115.ARW");
-        CreateMasterFile("mwp_d(1)_240115.RAF");
-        CreateMasterFile("mwp_e(1)_240115.DNG");
-        CreateMasterFile("mwp_f(1)_240115.TIF");
-        CreateMasterFile("mwp_g(1)_240115.TIFF");
+        CreateMasterFile("img_a(1)_240115.NEF");
+        CreateMasterFile("img_b(1)_240115.CR3");
+        CreateMasterFile("img_c(1)_240115.ARW");
+        CreateMasterFile("img_d(1)_240115.RAF");
+        CreateMasterFile("img_e(1)_240115.DNG");
+        CreateMasterFile("img_f(1)_240115.TIF");
+        CreateMasterFile("img_g(1)_240115.TIFF");
 
         // Act
         var result = SessionScanner.Scan(_testFolder);
@@ -158,7 +158,7 @@ public class SessionScannerTests : IDisposable
     public void Scan_ReturnsCorrectPaths()
     {
         // Arrange
-        var masterFile = "mwp_test(1)_240115.CR3";
+        var masterFile = "img_test(1)_240115.CR3";
         CreateMasterFile(masterFile);
         CreateCosFile(masterFile);
 
@@ -170,7 +170,7 @@ public class SessionScannerTests : IDisposable
         var item = result[0];
         Assert.Equal(Path.Combine(_testFolder, masterFile), item.MasterFilePath);
         Assert.Equal(
-            Path.Combine(_testFolder, "CaptureOne", "Settings", "mwp_test(1)_240115.cos"),
+            Path.Combine(_testFolder, "CaptureOne", "Settings", "img_test(1)_240115.cos"),
             item.CosFilePath);
     }
 
@@ -178,7 +178,7 @@ public class SessionScannerTests : IDisposable
     public void Scan_ParsedNameIsPopulated()
     {
         // Arrange
-        CreateMasterFile("mwp_inventory_id(3)_231201.NEF");
+        CreateMasterFile("img_inventory_id(3)_231201.NEF");
 
         // Act
         var result = SessionScanner.Scan(_testFolder);

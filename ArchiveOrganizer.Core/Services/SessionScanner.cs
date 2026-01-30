@@ -14,8 +14,9 @@ public static class SessionScanner
     /// Scans a folder recursively for master files and pairs them with COS sidecars.
     /// </summary>
     /// <param name="folderPath">Root folder to scan.</param>
+    /// <param name="prefix">Expected file name prefix.</param>
     /// <returns>List of archive items found.</returns>
-    public static List<ArchiveItem> Scan(string folderPath)
+    public static List<ArchiveItem> Scan(string folderPath, string prefix = FileNameParser.DefaultPrefix)
     {
         if (string.IsNullOrWhiteSpace(folderPath))
         {
@@ -28,11 +29,11 @@ public static class SessionScanner
         }
 
         var items = new List<ArchiveItem>();
-        ScanDirectory(folderPath, items);
+        ScanDirectory(folderPath, items, prefix);
         return items;
     }
 
-    private static void ScanDirectory(string directory, List<ArchiveItem> items)
+    private static void ScanDirectory(string directory, List<ArchiveItem> items, string prefix)
     {
         // Get all files in current directory
         string[] files;
@@ -48,7 +49,7 @@ public static class SessionScanner
         foreach (var filePath in files)
         {
             var fileName = Path.GetFileName(filePath);
-            var parsed = FileNameParser.TryParse(fileName);
+            var parsed = FileNameParser.TryParse(fileName, prefix);
 
             if (parsed is null)
             {
@@ -87,7 +88,7 @@ public static class SessionScanner
                 continue;
             }
 
-            ScanDirectory(subdir, items);
+            ScanDirectory(subdir, items, prefix);
         }
     }
 

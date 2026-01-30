@@ -6,13 +6,12 @@ using ArchiveOrganizer.Core.Models;
 /// <summary>
 /// Parses Capture One file names to extract inventory ID and other components.
 /// </summary>
-public static partial class FileNameParser
+public static class FileNameParser
 {
     /// <summary>
-    /// Pattern: mwp_[InventoryId]([Counter])_[YYMMDD].[Extension]
+    /// Default file name prefix.
     /// </summary>
-    [GeneratedRegex(@"^mwp_(.+?)\((\d)\)_(\d{6})\.([a-zA-Z0-9]+)$", RegexOptions.Compiled)]
-    private static partial Regex FileNamePattern();
+    public const string DefaultPrefix = "img_";
 
     /// <summary>
     /// Supported master file extensions (RAW + TIFF).
@@ -24,17 +23,21 @@ public static partial class FileNameParser
 
     /// <summary>
     /// Attempts to parse a file name and extract its components.
+    /// Pattern: [prefix][InventoryId]([Counter])_[YYMMDD].[Extension]
     /// </summary>
     /// <param name="fileName">File name (not full path) to parse.</param>
+    /// <param name="prefix">Expected file name prefix.</param>
     /// <returns>Parsed result or null if file name doesn't match expected pattern.</returns>
-    public static ParsedFileName? TryParse(string fileName)
+    public static ParsedFileName? TryParse(string fileName, string prefix = DefaultPrefix)
     {
         if (string.IsNullOrWhiteSpace(fileName))
         {
             return null;
         }
 
-        var match = FileNamePattern().Match(fileName);
+        var pattern = $"^{Regex.Escape(prefix)}(.+?)\\((\\d)\\)_(\\d{{6}})\\.([a-zA-Z0-9]+)$";
+        var match = Regex.Match(fileName, pattern);
+
         if (!match.Success)
         {
             return null;
