@@ -1,5 +1,5 @@
-# Claude instructions (never commit)
-CLAUDE.md
+# Claude instructions and docs (never commit)
+*.md
 
 # Build results
 [Dd]ebug/
