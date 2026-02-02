@@ -13,9 +13,12 @@ using ArchiveOrganizer.Core.Services;
 public partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
     private string _sourcePath = "";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CopyCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MoveCommand))]
     private string _destinationPath = "";
 
     [ObservableProperty]
@@ -25,6 +28,10 @@ public partial class MainViewModel : ObservableObject
     private string _statusMessage = "Ready";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CopyCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MoveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ExportCsvCommand))]
     private bool _isProcessing;
 
     [ObservableProperty]
@@ -65,20 +72,40 @@ public partial class MainViewModel : ObservableObject
         Results.Clear();
         StatusMessage = "Scanning...";
 
-        var items = SessionScanner.Scan(SourcePath, Prefix);
-
-        foreach (var item in items)
+        try
         {
-            Items.Add(item);
+            var items = SessionScanner.Scan(SourcePath, Prefix);
+
+            foreach (var item in items)
+            {
+                Items.Add(item);
+            }
+
+            StatusMessage = $"Found {Items.Count} files ({CompleteCount} complete, {MissingCosCount} missing COS)";
+        }
+        catch (DirectoryNotFoundException)
+        {
+            StatusMessage = "Error: Source folder not found";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "Error: Access denied to source folder";
+        }
+        catch (IOException ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
         }
 
-        StatusMessage = $"Found {Items.Count} files ({CompleteCount} complete, {MissingCosCount} missing COS)";
         OnPropertyChanged(nameof(SelectedCount));
         OnPropertyChanged(nameof(CompleteCount));
         OnPropertyChanged(nameof(MissingCosCount));
+        NotifySelectionChanged();
     }
 
-    private bool CanScan() => !string.IsNullOrWhiteSpace(SourcePath) && !IsProcessing;
+    private bool CanScan() =>
+        !string.IsNullOrWhiteSpace(SourcePath) &&
+        Directory.Exists(SourcePath) &&
+        !IsProcessing;
 
     [RelayCommand(CanExecute = nameof(CanProcess))]
     private void Copy()
@@ -109,28 +136,52 @@ public partial class MainViewModel : ObservableObject
         var operation = moveFiles ? "Moving" : "Copying";
         StatusMessage = $"{operation} {selectedItems.Count} files...";
 
-        var results = moveFiles
-            ? FileOrganizer.Move(selectedItems, DestinationPath)
-            : FileOrganizer.Copy(selectedItems, DestinationPath);
-
-        foreach (var result in results)
+        try
         {
-            Results.Add(result);
-            ProgressValue++;
+            var results = moveFiles
+                ? FileOrganizer.Move(selectedItems, DestinationPath)
+                : FileOrganizer.Copy(selectedItems, DestinationPath);
+
+            foreach (var result in results)
+            {
+                Results.Add(result);
+                ProgressValue++;
+            }
+
+            var successCount = results.Count(r => r.Success);
+            var failCount = results.Count(r => !r.Success);
+
+            StatusMessage = $"Completed: {successCount} succeeded, {failCount} failed";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "Error: Access denied to destination folder";
+        }
+        catch (IOException ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
         }
 
-        var successCount = results.Count(r => r.Success);
-        var failCount = results.Count(r => !r.Success);
-
-        StatusMessage = $"Completed: {successCount} succeeded, {failCount} failed";
         IsProcessing = false;
+        ExportCsvCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanExport))]
     private void ExportCsv(string filePath)
     {
-        ReportGenerator.GenerateCsv(Results, filePath);
-        StatusMessage = $"Report saved to {Path.GetFileName(filePath)}";
+        try
+        {
+            ReportGenerator.GenerateCsv(Results, filePath);
+            StatusMessage = $"Report saved to {Path.GetFileName(filePath)}";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "Error: Cannot write to selected location";
+        }
+        catch (IOException ex)
+        {
+            StatusMessage = $"Error saving report: {ex.Message}";
+        }
     }
 
     private bool CanExport() => Results.Count > 0 && !IsProcessing;

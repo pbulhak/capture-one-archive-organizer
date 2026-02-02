@@ -1,6 +1,7 @@
 namespace ArchiveOrganizer.UI;
 
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 using ArchiveOrganizer.UI.ViewModels;
 
@@ -58,6 +59,14 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() == true)
         {
             _viewModel.ExportCsvCommand.Execute(dialog.FileName);
+        }
+    }
+
+    private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+    {
+        if (e.Column.Header?.ToString() == "Select")
+        {
+            _viewModel.NotifySelectionChanged();
         }
     }
 
