@@ -170,7 +170,7 @@ public class SessionScannerTests : IDisposable
         var item = result[0];
         Assert.Equal(Path.Combine(_testFolder, masterFile), item.MasterFilePath);
         Assert.Equal(
-            Path.Combine(_testFolder, "CaptureOne", "Settings", "img_test(1)_240115.cos"),
+            Path.Combine(_testFolder, "CaptureOne", "Settings", "img_test(1)_240115.CR3.cos"),
             item.CosFilePath);
     }
 
@@ -204,8 +204,8 @@ public class SessionScannerTests : IDisposable
         var settingsDir = Path.Combine(dir, "CaptureOne", "Settings");
         Directory.CreateDirectory(settingsDir);
 
-        var baseName = Path.GetFileNameWithoutExtension(masterFileName);
-        var cosFileName = baseName + ".cos";
+        // Capture One names COS files as originalFileName.cos (preserving the original extension)
+        var cosFileName = masterFileName + ".cos";
         File.WriteAllText(Path.Combine(settingsDir, cosFileName), "");
     }
 }

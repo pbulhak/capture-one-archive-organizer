@@ -102,8 +102,8 @@ public static class SessionScanner
     /// </summary>
     private static string? FindCosFile(string masterDirectory, string masterFileName)
     {
-        var baseName = Path.GetFileNameWithoutExtension(masterFileName);
-        var cosFileName = baseName + CosExtension;
+        // Capture One names COS files as originalFileName.cos (preserving the original extension)
+        var cosFileName = masterFileName + CosExtension;
 
         // Try each known settings path location
         foreach (var settingsSubPath in CaptureOneSettingsPaths)
