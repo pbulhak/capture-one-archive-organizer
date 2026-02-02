@@ -5,7 +5,7 @@ using ArchiveOrganizer.Core.Services;
 
 public class FileOrganizerTests : IDisposable
 {
-    private const string TestPrefix = "img";
+    private const string TestPrefix = "img_";
     private readonly string _sourceFolder;
     private readonly string _destFolder;
 

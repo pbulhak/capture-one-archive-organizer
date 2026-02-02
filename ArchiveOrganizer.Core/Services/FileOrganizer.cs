@@ -110,7 +110,7 @@ public static class FileOrganizer
     {
         try
         {
-            var folderName = $"{prefix}_{item.InventoryId}";
+            var folderName = $"{prefix}{item.InventoryId}";
             var itemFolder = Path.Combine(destinationFolder, folderName);
             var settingsFolder = Path.Combine(itemFolder, CaptureOneSettingsPath);
 
@@ -214,7 +214,7 @@ public static class FileOrganizer
         try
         {
             // Create destination folder structure with prefix
-            var folderName = $"{prefix}_{item.InventoryId}";
+            var folderName = $"{prefix}{item.InventoryId}";
             var itemFolder = Path.Combine(destinationFolder, folderName);
             var settingsFolder = Path.Combine(itemFolder, CaptureOneSettingsPath);
 
