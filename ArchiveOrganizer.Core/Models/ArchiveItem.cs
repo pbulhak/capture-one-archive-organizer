@@ -1,10 +1,14 @@
 namespace ArchiveOrganizer.Core.Models;
 
+using System.ComponentModel;
+
 /// <summary>
 /// Represents a single file pair (master image + optional COS sidecar).
 /// </summary>
-public sealed class ArchiveItem
+public sealed class ArchiveItem : INotifyPropertyChanged
 {
+    private bool _isSelected = true;
+
     /// <summary>
     /// Inventory ID extracted from file name - used as target folder name.
     /// </summary>
@@ -33,5 +37,19 @@ public sealed class ArchiveItem
     /// <summary>
     /// Whether this item is selected for processing.
     /// </summary>
-    public bool IsSelected { get; set; } = true;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected != value)
+            {
+                _isSelected = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public event PropertyChangedEventHandler? PropertyChanged;
 }
