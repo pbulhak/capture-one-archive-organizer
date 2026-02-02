@@ -7,7 +7,11 @@ using ArchiveOrganizer.Core.Models;
 /// </summary>
 public static class SessionScanner
 {
-    private const string CaptureOneSettingsPath = "CaptureOne/Settings";
+    private static readonly string[] CaptureOneSettingsPaths =
+    [
+        "CaptureOne/Settings153",  // Capture One 15.x
+        "CaptureOne/Settings",     // Older versions
+    ];
     private const string CosExtension = ".cos";
 
     /// <summary>
@@ -94,19 +98,22 @@ public static class SessionScanner
 
     /// <summary>
     /// Finds COS sidecar file for a given master file.
-    /// Looks in CaptureOne/Settings/ subdirectory relative to master file location.
+    /// Looks in CaptureOne/Settings*/ subdirectories relative to master file location.
     /// </summary>
     private static string? FindCosFile(string masterDirectory, string masterFileName)
     {
         var baseName = Path.GetFileNameWithoutExtension(masterFileName);
         var cosFileName = baseName + CosExtension;
 
-        // Look in CaptureOne/Settings/ relative to master file
-        var settingsPath = Path.Combine(masterDirectory, CaptureOneSettingsPath, cosFileName);
-
-        if (File.Exists(settingsPath))
+        // Try each known settings path location
+        foreach (var settingsSubPath in CaptureOneSettingsPaths)
         {
-            return settingsPath;
+            var cosPath = Path.Combine(masterDirectory, settingsSubPath, cosFileName);
+
+            if (File.Exists(cosPath))
+            {
+                return cosPath;
+            }
         }
 
         return null;
