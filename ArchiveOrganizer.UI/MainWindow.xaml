@@ -1,13 +1,208 @@
 <Window x:Class="ArchiveOrganizer.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ArchiveOrganizer.UI.ViewModels"
         Title="Archive Organizer"
-        Height="600"
-        Width="900">
-    <Grid>
-        <TextBlock Text="Archive Organizer"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="24"/>
+        Height="700"
+        Width="1000"
+        MinHeight="500"
+        MinWidth="800">
+
+    <Window.Resources>
+        <!-- Status to color converter -->
+        <Style x:Key="StatusCellStyle" TargetType="TextBlock">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Complete">
+                    <Setter Property="Foreground" Value="Green"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="MissingCos">
+                    <Setter Property="Foreground" Value="Orange"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="MissingRaw">
+                    <Setter Property="Foreground" Value="Red"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Panel: Paths and Settings -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Source Path -->
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Source Folder:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,5"/>
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,0,5,5"/>
+            <Button Grid.Row="0" Grid.Column="2"
+                    Content="Browse..."
+                    Click="BrowseSource_Click"
+                    Margin="0,0,0,5"/>
+
+            <!-- Destination Path -->
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Destination:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,5"/>
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding DestinationPath, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,0,5,5"/>
+            <Button Grid.Row="1" Grid.Column="2"
+                    Content="Browse..."
+                    Click="BrowseDestination_Click"
+                    Margin="0,0,0,5"/>
+
+            <!-- Prefix -->
+            <TextBlock Grid.Row="2" Grid.Column="0"
+                       Text="File Prefix:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
+                     Width="150"
+                     HorizontalAlignment="Left"/>
+        </Grid>
+
+        <!-- Middle Panel: DataGrid -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  SelectionMode="Single"
+                  IsReadOnly="False"
+                  Margin="0,0,0,10">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Select"
+                                        Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                        Width="50"/>
+                <DataGridTextColumn Header="Inventory ID"
+                                    Binding="{Binding InventoryId}"
+                                    Width="120"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="File Name"
+                                    Binding="{Binding ParsedName.OriginalFileName}"
+                                    Width="250"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="Date"
+                                    Binding="{Binding ParsedName.Date}"
+                                    Width="70"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="Ext"
+                                    Binding="{Binding ParsedName.Extension}"
+                                    Width="50"
+                                    IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="COS" Width="50">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="✅"/>
+                                        <Setter Property="Foreground" Value="Green"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CosFilePath}" Value="{x:Null}">
+                                                <Setter Property="Text" Value="❌"/>
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Status"
+                                    Binding="{Binding Status}"
+                                    Width="100"
+                                    IsReadOnly="True"
+                                    ElementStyle="{StaticResource StatusCellStyle}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Selection and Action Buttons -->
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Selection Buttons -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button Content="Select All"
+                        Command="{Binding SelectAllCommand}"
+                        Width="80" Margin="0,0,5,0"/>
+                <Button Content="Select None"
+                        Command="{Binding SelectNoneCommand}"
+                        Width="80" Margin="0,0,5,0"/>
+                <Button Content="Select Complete"
+                        Command="{Binding SelectCompleteCommand}"
+                        Width="100" Margin="0,0,5,0"/>
+                <TextBlock VerticalAlignment="Center" Margin="10,0,0,0">
+                    <Run Text="Selected: "/>
+                    <Run Text="{Binding SelectedCount, Mode=OneWay}"/>
+                    <Run Text=" | Complete: "/>
+                    <Run Text="{Binding CompleteCount, Mode=OneWay}"/>
+                    <Run Text=" | Missing COS: "/>
+                    <Run Text="{Binding MissingCosCount, Mode=OneWay}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Content="Scan"
+                        Command="{Binding ScanCommand}"
+                        Width="80" Margin="0,0,5,0"
+                        FontWeight="Bold"/>
+                <Button Content="Copy"
+                        Command="{Binding CopyCommand}"
+                        Width="80" Margin="0,0,5,0"/>
+                <Button Content="Move"
+                        Command="{Binding MoveCommand}"
+                        Width="80" Margin="0,0,5,0"/>
+                <Button Content="Export CSV"
+                        Click="ExportCsv_Click"
+                        Width="80"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Bottom Panel: Progress and Status -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="{Binding StatusMessage}"
+                       VerticalAlignment="Center"/>
+            <ProgressBar Grid.Column="1"
+                         Value="{Binding ProgressValue}"
+                         Maximum="{Binding ProgressMax}"
+                         Height="20"
+                         Margin="10,0,0,0"/>
+        </Grid>
     </Grid>
 </Window>
