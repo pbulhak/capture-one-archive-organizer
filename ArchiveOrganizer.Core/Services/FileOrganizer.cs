@@ -7,19 +7,21 @@ using ArchiveOrganizer.Core.Models;
 /// </summary>
 public static class FileOrganizer
 {
-    private const string CaptureOneSettingsPath = "CaptureOne/Settings";
+    private const string CaptureOneSettingsPath = "CaptureOne/Settings153";
 
     /// <summary>
     /// Copies selected archive items to destination folder.
     /// </summary>
     /// <param name="items">Items to copy.</param>
     /// <param name="destinationFolder">Root destination folder.</param>
+    /// <param name="prefix">Prefix for destination folder names.</param>
     /// <returns>List of operation results.</returns>
     public static List<OperationResult> Copy(
         IEnumerable<ArchiveItem> items,
-        string destinationFolder)
+        string destinationFolder,
+        string prefix = FileNameParser.DefaultPrefix)
     {
-        return ProcessItems(items, destinationFolder, moveFiles: false);
+        return ProcessItems(items, destinationFolder, prefix, moveFiles: false);
     }
 
     /// <summary>
@@ -27,17 +29,20 @@ public static class FileOrganizer
     /// </summary>
     /// <param name="items">Items to move.</param>
     /// <param name="destinationFolder">Root destination folder.</param>
+    /// <param name="prefix">Prefix for destination folder names.</param>
     /// <returns>List of operation results.</returns>
     public static List<OperationResult> Move(
         IEnumerable<ArchiveItem> items,
-        string destinationFolder)
+        string destinationFolder,
+        string prefix = FileNameParser.DefaultPrefix)
     {
-        return ProcessItems(items, destinationFolder, moveFiles: true);
+        return ProcessItems(items, destinationFolder, prefix, moveFiles: true);
     }
 
     private static List<OperationResult> ProcessItems(
         IEnumerable<ArchiveItem> items,
         string destinationFolder,
+        string prefix,
         bool moveFiles)
     {
         var results = new List<OperationResult>();
@@ -49,7 +54,7 @@ public static class FileOrganizer
                 continue;
             }
 
-            var result = ProcessItem(item, destinationFolder, moveFiles);
+            var result = ProcessItem(item, destinationFolder, prefix, moveFiles);
             results.Add(result);
         }
 
@@ -59,12 +64,14 @@ public static class FileOrganizer
     private static OperationResult ProcessItem(
         ArchiveItem item,
         string destinationFolder,
+        string prefix,
         bool moveFiles)
     {
         try
         {
-            // Create destination folder structure
-            var itemFolder = Path.Combine(destinationFolder, item.InventoryId);
+            // Create destination folder structure with prefix
+            var folderName = $"{prefix}_{item.InventoryId}";
+            var itemFolder = Path.Combine(destinationFolder, folderName);
             var settingsFolder = Path.Combine(itemFolder, CaptureOneSettingsPath);
 
             Directory.CreateDirectory(itemFolder);

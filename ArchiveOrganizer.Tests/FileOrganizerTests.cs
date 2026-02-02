@@ -5,6 +5,7 @@ using ArchiveOrganizer.Core.Services;
 
 public class FileOrganizerTests : IDisposable
 {
+    private const string TestPrefix = "img";
     private readonly string _sourceFolder;
     private readonly string _destFolder;
 
@@ -36,17 +37,17 @@ public class FileOrganizerTests : IDisposable
         var item = CreateTestItem("123x", withCos: true);
 
         // Act
-        var results = FileOrganizer.Copy([item], _destFolder);
+        var results = FileOrganizer.Copy([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Single(results);
         Assert.True(results[0].Success);
 
-        // Check structure
-        Assert.True(Directory.Exists(Path.Combine(_destFolder, "123x")));
-        Assert.True(Directory.Exists(Path.Combine(_destFolder, "123x", "CaptureOne", "Settings")));
-        Assert.True(File.Exists(Path.Combine(_destFolder, "123x", "img_123x(1)_240115.CR3")));
-        Assert.True(File.Exists(Path.Combine(_destFolder, "123x", "CaptureOne", "Settings", "img_123x(1)_240115.cos")));
+        // Check structure - folder name is prefix_inventoryId
+        Assert.True(Directory.Exists(Path.Combine(_destFolder, "img_123x")));
+        Assert.True(Directory.Exists(Path.Combine(_destFolder, "img_123x", "CaptureOne", "Settings153")));
+        Assert.True(File.Exists(Path.Combine(_destFolder, "img_123x", "img_123x(1)_240115.CR3")));
+        Assert.True(File.Exists(Path.Combine(_destFolder, "img_123x", "CaptureOne", "Settings153", "img_123x(1)_240115.cos")));
 
         // Source still exists (copy)
         Assert.True(File.Exists(item.MasterFilePath));
@@ -59,13 +60,13 @@ public class FileOrganizerTests : IDisposable
         var item = CreateTestItem("456", withCos: false);
 
         // Act
-        var results = FileOrganizer.Copy([item], _destFolder);
+        var results = FileOrganizer.Copy([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Single(results);
         Assert.True(results[0].Success);
-        Assert.True(File.Exists(Path.Combine(_destFolder, "456", "img_456(1)_240115.CR3")));
-        Assert.False(File.Exists(Path.Combine(_destFolder, "456", "CaptureOne", "Settings", "img_456(1)_240115.cos")));
+        Assert.True(File.Exists(Path.Combine(_destFolder, "img_456", "img_456(1)_240115.CR3")));
+        Assert.False(File.Exists(Path.Combine(_destFolder, "img_456", "CaptureOne", "Settings153", "img_456(1)_240115.cos")));
     }
 
     [Fact]
@@ -77,14 +78,14 @@ public class FileOrganizerTests : IDisposable
         var sourceCosPath = item.CosFilePath;
 
         // Act
-        var results = FileOrganizer.Move([item], _destFolder);
+        var results = FileOrganizer.Move([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Single(results);
         Assert.True(results[0].Success);
 
         // Destination exists
-        Assert.True(File.Exists(Path.Combine(_destFolder, "789", "img_789(1)_240115.CR3")));
+        Assert.True(File.Exists(Path.Combine(_destFolder, "img_789", "img_789(1)_240115.CR3")));
 
         // Source removed
         Assert.False(File.Exists(sourceMasterPath));
@@ -99,11 +100,11 @@ public class FileOrganizerTests : IDisposable
         item.IsSelected = false;
 
         // Act
-        var results = FileOrganizer.Copy([item], _destFolder);
+        var results = FileOrganizer.Copy([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Empty(results);
-        Assert.False(Directory.Exists(Path.Combine(_destFolder, "skipped")));
+        Assert.False(Directory.Exists(Path.Combine(_destFolder, "img_skipped")));
     }
 
     [Fact]
@@ -114,13 +115,13 @@ public class FileOrganizerTests : IDisposable
         var item2 = CreateTestItem("bbb", withCos: false);
 
         // Act
-        var results = FileOrganizer.Copy([item1, item2], _destFolder);
+        var results = FileOrganizer.Copy([item1, item2], _destFolder, TestPrefix);
 
         // Assert
         Assert.Equal(2, results.Count);
         Assert.All(results, r => Assert.True(r.Success));
-        Assert.True(Directory.Exists(Path.Combine(_destFolder, "aaa")));
-        Assert.True(Directory.Exists(Path.Combine(_destFolder, "bbb")));
+        Assert.True(Directory.Exists(Path.Combine(_destFolder, "img_aaa")));
+        Assert.True(Directory.Exists(Path.Combine(_destFolder, "img_bbb")));
     }
 
     [Fact]
@@ -131,13 +132,13 @@ public class FileOrganizerTests : IDisposable
         var item2 = CreateTestItem("same_id", withCos: true, counter: 2);
 
         // Act
-        var results = FileOrganizer.Copy([item1, item2], _destFolder);
+        var results = FileOrganizer.Copy([item1, item2], _destFolder, TestPrefix);
 
         // Assert
         Assert.Equal(2, results.Count);
         Assert.All(results, r => Assert.True(r.Success));
 
-        var folder = Path.Combine(_destFolder, "same_id");
+        var folder = Path.Combine(_destFolder, "img_same_id");
         Assert.True(File.Exists(Path.Combine(folder, "img_same_id(1)_240115.CR3")));
         Assert.True(File.Exists(Path.Combine(folder, "img_same_id(2)_240115.CR3")));
     }
@@ -149,13 +150,13 @@ public class FileOrganizerTests : IDisposable
         var item = CreateTestItem("test", withCos: true);
 
         // Act
-        var results = FileOrganizer.Copy([item], _destFolder);
+        var results = FileOrganizer.Copy([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Single(results);
         var result = results[0];
-        Assert.Equal(Path.Combine(_destFolder, "test", "img_test(1)_240115.CR3"), result.DestinationMasterPath);
-        Assert.Equal(Path.Combine(_destFolder, "test", "CaptureOne", "Settings", "img_test(1)_240115.cos"), result.DestinationCosPath);
+        Assert.Equal(Path.Combine(_destFolder, "img_test", "img_test(1)_240115.CR3"), result.DestinationMasterPath);
+        Assert.Equal(Path.Combine(_destFolder, "img_test", "CaptureOne", "Settings153", "img_test(1)_240115.cos"), result.DestinationCosPath);
     }
 
     [Fact]
@@ -165,12 +166,12 @@ public class FileOrganizerTests : IDisposable
         var item = CreateTestItem("exists", withCos: true);
 
         // Create destination file first
-        var destFolder = Path.Combine(_destFolder, "exists");
+        var destFolder = Path.Combine(_destFolder, "img_exists");
         Directory.CreateDirectory(destFolder);
         File.WriteAllText(Path.Combine(destFolder, "img_exists(1)_240115.CR3"), "existing");
 
         // Act
-        var results = FileOrganizer.Copy([item], _destFolder);
+        var results = FileOrganizer.Copy([item], _destFolder, TestPrefix);
 
         // Assert
         Assert.Single(results);

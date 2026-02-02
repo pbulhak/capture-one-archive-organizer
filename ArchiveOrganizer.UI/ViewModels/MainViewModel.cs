@@ -139,8 +139,8 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var results = moveFiles
-                ? FileOrganizer.Move(selectedItems, DestinationPath)
-                : FileOrganizer.Copy(selectedItems, DestinationPath);
+                ? FileOrganizer.Move(selectedItems, DestinationPath, Prefix)
+                : FileOrganizer.Copy(selectedItems, DestinationPath, Prefix);
 
             foreach (var result in results)
             {
