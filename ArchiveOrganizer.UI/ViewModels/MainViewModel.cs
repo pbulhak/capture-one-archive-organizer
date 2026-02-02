@@ -40,6 +40,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _progressMax = 100;
 
+    [ObservableProperty]
+    private string _currentFileName = "";
+
+    [ObservableProperty]
+    private string _transferSpeed = "";
+
     /// <summary>
     /// Collection of scanned archive items.
     /// </summary>
@@ -108,15 +114,15 @@ public partial class MainViewModel : ObservableObject
         !IsProcessing;
 
     [RelayCommand(CanExecute = nameof(CanProcess))]
-    private void Copy()
+    private async Task CopyAsync()
     {
-        ProcessItems(moveFiles: false);
+        await ProcessItemsAsync(moveFiles: false);
     }
 
     [RelayCommand(CanExecute = nameof(CanProcess))]
-    private void Move()
+    private async Task MoveAsync()
     {
-        ProcessItems(moveFiles: true);
+        await ProcessItemsAsync(moveFiles: true);
     }
 
     private bool CanProcess() =>
@@ -124,10 +130,12 @@ public partial class MainViewModel : ObservableObject
         Items.Any(i => i.IsSelected) &&
         !IsProcessing;
 
-    private void ProcessItems(bool moveFiles)
+    private async Task ProcessItemsAsync(bool moveFiles)
     {
         IsProcessing = true;
         Results.Clear();
+        CurrentFileName = "";
+        TransferSpeed = "";
 
         var selectedItems = Items.Where(i => i.IsSelected).ToList();
         ProgressMax = selectedItems.Count;
@@ -136,21 +144,29 @@ public partial class MainViewModel : ObservableObject
         var operation = moveFiles ? "Moving" : "Copying";
         StatusMessage = $"{operation} {selectedItems.Count} files...";
 
+        var progress = new Progress<CopyProgress>(p =>
+        {
+            CurrentFileName = p.CurrentFileName;
+            ProgressValue = p.ProcessedFiles;
+            TransferSpeed = FormatSpeed(p.SpeedBytesPerSecond);
+        });
+
         try
         {
             var results = moveFiles
-                ? FileOrganizer.Move(selectedItems, DestinationPath, Prefix)
-                : FileOrganizer.Copy(selectedItems, DestinationPath, Prefix);
+                ? await FileOrganizer.MoveAsync(selectedItems, DestinationPath, Prefix, progress)
+                : await FileOrganizer.CopyAsync(selectedItems, DestinationPath, Prefix, progress);
 
             foreach (var result in results)
             {
                 Results.Add(result);
-                ProgressValue++;
             }
 
             var successCount = results.Count(r => r.Success);
             var failCount = results.Count(r => !r.Success);
 
+            CurrentFileName = "";
+            TransferSpeed = "";
             StatusMessage = $"Completed: {successCount} succeeded, {failCount} failed";
         }
         catch (UnauthorizedAccessException)
@@ -164,6 +180,22 @@ public partial class MainViewModel : ObservableObject
 
         IsProcessing = false;
         ExportCsvCommand.NotifyCanExecuteChanged();
+    }
+
+    private static string FormatSpeed(double bytesPerSecond)
+    {
+        if (bytesPerSecond <= 0)
+        {
+            return "";
+        }
+
+        return bytesPerSecond switch
+        {
+            >= 1_073_741_824 => $"{bytesPerSecond / 1_073_741_824:F1} GB/s",
+            >= 1_048_576 => $"{bytesPerSecond / 1_048_576:F1} MB/s",
+            >= 1024 => $"{bytesPerSecond / 1024:F1} KB/s",
+            _ => $"{bytesPerSecond:F0} B/s"
+        };
     }
 
     [RelayCommand(CanExecute = nameof(CanExport))]
