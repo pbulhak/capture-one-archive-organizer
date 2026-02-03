@@ -10,6 +10,7 @@ public static class SessionScanner
     private static readonly string[] CaptureOneSettingsPaths =
     [
         "CaptureOne/Settings153",  // Capture One 15.x
+        "CaptureOne/Settings120",  // Capture One 12.x
         "CaptureOne/Settings",     // Older versions
     ];
     private const string CosExtension = ".cos";
@@ -61,14 +62,15 @@ public static class SessionScanner
                 continue;
             }
 
-            var cosPath = FindCosFile(directory, fileName);
-            var additionalSidecars = FindAdditionalSidecars(directory, fileName);
+            var (cosPath, settingsSubPath) = FindCosFile(directory, fileName);
+            var additionalSidecars = FindAdditionalSidecars(directory, fileName, settingsSubPath);
 
             items.Add(new ArchiveItem
             {
                 InventoryId = parsed.InventoryId,
                 MasterFilePath = filePath,
                 CosFilePath = cosPath,
+                SettingsSubPath = settingsSubPath,
                 AdditionalSidecarPaths = additionalSidecars.Count > 0 ? additionalSidecars : null,
                 ParsedName = parsed
             });
@@ -103,7 +105,8 @@ public static class SessionScanner
     /// Finds COS sidecar file for a given master file.
     /// Looks in CaptureOne/Settings*/ subdirectories relative to master file location.
     /// </summary>
-    private static string? FindCosFile(string masterDirectory, string masterFileName)
+    /// <returns>Tuple of (COS file path, Settings subpath used) or (null, null) if not found.</returns>
+    private static (string? CosPath, string? SettingsSubPath) FindCosFile(string masterDirectory, string masterFileName)
     {
         // Capture One names COS files as originalFileName.cos (preserving the original extension)
         var cosFileName = masterFileName + CosExtension;
@@ -115,24 +118,30 @@ public static class SessionScanner
 
             if (File.Exists(cosPath))
             {
-                return cosPath;
+                return (cosPath, settingsSubPath);
             }
         }
 
-        return null;
+        return (null, null);
     }
 
     /// <summary>
     /// Finds additional sidecar files (ICM/LCC profiles) for a given master file.
     /// Pattern: masterFileName.profileName.icm or .lcc
     /// </summary>
-    private static List<string> FindAdditionalSidecars(string masterDirectory, string masterFileName)
+    /// <param name="masterDirectory">Directory containing the master file.</param>
+    /// <param name="masterFileName">Name of the master file.</param>
+    /// <param name="settingsSubPath">Settings subpath where COS was found, or null to search all.</param>
+    private static List<string> FindAdditionalSidecars(string masterDirectory, string masterFileName, string? settingsSubPath)
     {
         var sidecars = new List<string>();
+        var pathsToSearch = settingsSubPath is not null
+            ? [settingsSubPath]
+            : CaptureOneSettingsPaths;
 
-        foreach (var settingsSubPath in CaptureOneSettingsPaths)
+        foreach (var subPath in pathsToSearch)
         {
-            var settingsDir = Path.Combine(masterDirectory, settingsSubPath);
+            var settingsDir = Path.Combine(masterDirectory, subPath);
 
             if (!Directory.Exists(settingsDir))
             {

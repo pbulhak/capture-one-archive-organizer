@@ -25,6 +25,12 @@ public sealed class ArchiveItem : INotifyPropertyChanged
     public string? CosFilePath { get; init; }
 
     /// <summary>
+    /// Relative path to the Settings folder (e.g., "CaptureOne/Settings120").
+    /// Used to preserve original folder structure when copying.
+    /// </summary>
+    public string? SettingsSubPath { get; init; }
+
+    /// <summary>
     /// Paths to additional sidecar files (ICC/LCC profiles).
     /// </summary>
     public List<string>? AdditionalSidecarPaths { get; init; }

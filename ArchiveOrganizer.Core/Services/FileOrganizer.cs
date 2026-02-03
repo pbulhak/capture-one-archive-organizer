@@ -8,7 +8,7 @@ using ArchiveOrganizer.Core.Models;
 /// </summary>
 public static class FileOrganizer
 {
-    private const string CaptureOneSettingsPath = "CaptureOne/Settings153";
+    private const string DefaultSettingsPath = "CaptureOne/Settings153";
     private const int BufferSize = 81920; // 80 KB buffer for progress reporting
 
     /// <summary>
@@ -112,7 +112,8 @@ public static class FileOrganizer
         {
             var folderName = $"{prefix}{item.InventoryId}";
             var itemFolder = Path.Combine(destinationFolder, folderName);
-            var settingsFolder = Path.Combine(itemFolder, CaptureOneSettingsPath);
+            var settingsSubPath = item.SettingsSubPath ?? DefaultSettingsPath;
+            var settingsFolder = Path.Combine(itemFolder, settingsSubPath);
 
             Directory.CreateDirectory(itemFolder);
             Directory.CreateDirectory(settingsFolder);
@@ -235,7 +236,8 @@ public static class FileOrganizer
             // Create destination folder structure with prefix
             var folderName = $"{prefix}{item.InventoryId}";
             var itemFolder = Path.Combine(destinationFolder, folderName);
-            var settingsFolder = Path.Combine(itemFolder, CaptureOneSettingsPath);
+            var settingsSubPath = item.SettingsSubPath ?? DefaultSettingsPath;
+            var settingsFolder = Path.Combine(itemFolder, settingsSubPath);
 
             Directory.CreateDirectory(itemFolder);
             Directory.CreateDirectory(settingsFolder);
