@@ -25,6 +25,16 @@ public sealed class ArchiveItem : INotifyPropertyChanged
     public string? CosFilePath { get; init; }
 
     /// <summary>
+    /// Paths to additional sidecar files (ICC/LCC profiles).
+    /// </summary>
+    public List<string>? AdditionalSidecarPaths { get; init; }
+
+    /// <summary>
+    /// Whether this item has ICC or LCC profile files.
+    /// </summary>
+    public bool HasIccLcc => AdditionalSidecarPaths is { Count: > 0 };
+
+    /// <summary>
     /// Parsed file name components.
     /// </summary>
     public required ParsedFileName ParsedName { get; init; }

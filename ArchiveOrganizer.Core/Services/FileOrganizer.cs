@@ -146,6 +146,25 @@ public static class FileOrganizer
                 }
             }
 
+            // Copy/move additional sidecars (ICM/LCC profiles)
+            if (item.AdditionalSidecarPaths is not null)
+            {
+                foreach (var sidecarPath in item.AdditionalSidecarPaths)
+                {
+                    var sidecarFileName = Path.GetFileName(sidecarPath);
+                    var destSidecarPath = Path.Combine(settingsFolder, sidecarFileName);
+
+                    if (moveFiles)
+                    {
+                        File.Move(sidecarPath, destSidecarPath, overwrite: false);
+                    }
+                    else
+                    {
+                        await CopyFileWithSpeedAsync(sidecarPath, destSidecarPath, cancellationToken);
+                    }
+                }
+            }
+
             return (OperationResult.Ok(item, destMasterPath, destCosPath), speed);
         }
         catch (OperationCanceledException)
@@ -248,6 +267,25 @@ public static class FileOrganizer
                 else
                 {
                     File.Copy(item.CosFilePath, destCosPath, overwrite: false);
+                }
+            }
+
+            // Copy/move additional sidecars (ICM/LCC profiles)
+            if (item.AdditionalSidecarPaths is not null)
+            {
+                foreach (var sidecarPath in item.AdditionalSidecarPaths)
+                {
+                    var sidecarFileName = Path.GetFileName(sidecarPath);
+                    var destSidecarPath = Path.Combine(settingsFolder, sidecarFileName);
+
+                    if (moveFiles)
+                    {
+                        File.Move(sidecarPath, destSidecarPath, overwrite: false);
+                    }
+                    else
+                    {
+                        File.Copy(sidecarPath, destSidecarPath, overwrite: false);
+                    }
                 }
             }
 

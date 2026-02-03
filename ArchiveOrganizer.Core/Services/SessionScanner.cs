@@ -13,6 +13,7 @@ public static class SessionScanner
         "CaptureOne/Settings",     // Older versions
     ];
     private const string CosExtension = ".cos";
+    private static readonly string[] AdditionalSidecarExtensions = [".icm", ".lcc"];
 
     /// <summary>
     /// Scans a folder recursively for master files and pairs them with COS sidecars.
@@ -61,12 +62,14 @@ public static class SessionScanner
             }
 
             var cosPath = FindCosFile(directory, fileName);
+            var additionalSidecars = FindAdditionalSidecars(directory, fileName);
 
             items.Add(new ArchiveItem
             {
                 InventoryId = parsed.InventoryId,
                 MasterFilePath = filePath,
                 CosFilePath = cosPath,
+                AdditionalSidecarPaths = additionalSidecars.Count > 0 ? additionalSidecars : null,
                 ParsedName = parsed
             });
         }
@@ -117,5 +120,53 @@ public static class SessionScanner
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Finds additional sidecar files (ICM/LCC profiles) for a given master file.
+    /// Pattern: masterFileName.profileName.icm or .lcc
+    /// </summary>
+    private static List<string> FindAdditionalSidecars(string masterDirectory, string masterFileName)
+    {
+        var sidecars = new List<string>();
+
+        foreach (var settingsSubPath in CaptureOneSettingsPaths)
+        {
+            var settingsDir = Path.Combine(masterDirectory, settingsSubPath);
+
+            if (!Directory.Exists(settingsDir))
+            {
+                continue;
+            }
+
+            try
+            {
+                // Pattern: masterFileName.*.icm or masterFileName.*.lcc
+                var prefix = masterFileName + ".";
+                var files = Directory.GetFiles(settingsDir);
+
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+
+                    if (!fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var extension = Path.GetExtension(file);
+                    if (AdditionalSidecarExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sidecars.Add(file);
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Skip inaccessible directories
+            }
+        }
+
+        return sidecars;
     }
 }
